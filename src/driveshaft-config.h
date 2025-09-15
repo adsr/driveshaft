@@ -31,13 +31,24 @@ public:
 
     std::pair<StringSet, StringSet> compare(const DriveshaftConfig& that) const noexcept;
 
+    uint32_t getWorkerCount(const std::string& pool_name) const;
+
+    void setDepoolFile(const std::string& depool_file);
+    void setDepooled(bool depooled);
+    bool getDepooled() const;
+
+    void setConfigModTime(std::time_t t);
+    std::time_t getConfigModTime() const;
+
 private:
     void parseServerList(const Json::Value& node);
     void parsePoolList(const Json::Value& node);
 
     bool needsConfigUpdate(const std::string& new_config_filename) const;
+    bool needsDepoolOrRepool();
     std::string fetchFileContents(const std::string& filename) const;
     bool validateConfigNode(const Json::Value& node) const;
+    bool depoolFileExists() const;
 
     typedef struct {
         uint32_t worker_count;
@@ -50,6 +61,8 @@ private:
     StringSet m_server_list;
     PoolMap m_pool_map;
     std::time_t m_load_time;
+    std::string m_depool_filename;
+    bool m_is_depooled;
 };
 
 } // namespace Driveshaft

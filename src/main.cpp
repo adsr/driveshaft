@@ -125,6 +125,7 @@ int main(int argc, char **argv) {
     std::string pid_filename;
     bool daemonize = false;
     std::string exporter_addr;
+    std::string depool_file;
 
     /* Parse command line opts */
     namespace po = boost::program_options;
@@ -140,6 +141,7 @@ int main(int argc, char **argv) {
             ("max_running_time", po::value<uint32_t>(&Driveshaft::MAX_JOB_RUNNING_TIME)->required(), "how long can a job run before it is considered failed (in seconds)")
             ("loop_timeout", po::value<uint32_t>(&Driveshaft::GEARMAND_RESPONSE_TIMEOUT)->required(), "how long to wait for a response from gearmand before restarting event-loop (in seconds)")
             ("exporter_addr", po::value<std::string>(&exporter_addr)->default_value("0.0.0.0:8888"), "the address:port on which to launch a prometheus exporter to publish metrics")
+            ("depool_file", po::value<std::string>(&depool_file)->default_value(""), "when file exists, all worker counts go to 0")
     ;
 
     try {
@@ -203,7 +205,7 @@ int main(int argc, char **argv) {
         LOG4CXX_INFO(Driveshaft::MainLogger, "Starting up with gearmand response timeout=" << Driveshaft::GEARMAND_RESPONSE_TIMEOUT
                                              << " and max running time=" << Driveshaft::MAX_JOB_RUNNING_TIME);
 
-        Driveshaft::MainLoop loop(jobs_config_file, exporter_addr);
+        Driveshaft::MainLoop loop(jobs_config_file, exporter_addr, depool_file);
         loop.run();
     } catch (std::exception& e) {
         std::cout << "MainLoop threw exception: " << e.what() << std::endl;

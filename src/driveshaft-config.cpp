@@ -22,7 +22,8 @@ DriveshaftConfig::DriveshaftConfig() noexcept :
 }
 
 bool DriveshaftConfig::load(const std::string& config_filename, std::shared_ptr<Json::CharReader> json_parser) {
-    if (!this->needsConfigUpdate(config_filename)) {
+    if (!this->needsDepoolOrRepool() &&
+        !this->needsConfigUpdate(config_filename)) {
         return false;
     }
 
@@ -90,6 +91,17 @@ void DriveshaftConfig::clearAllWorkerCounts(PoolWatcher& watcher) {
     for (const auto& i : this->m_pool_map) {
         this->clearWorkerCount(i.first, watcher);
     }
+}
+
+uint32_t DriveshaftConfig::getWorkerCount(const std::string& pool_name) const {
+    auto pool_iter = this->m_pool_map.find(pool_name);
+    if (pool_iter == this->m_pool_map.end()) {
+        LOG4CXX_ERROR(MainLogger, "getWorkerCount requested, " << pool_name << " does not exist in config");
+        throw std::runtime_error("invalid config detected in getWorkerCount");
+    }
+
+    auto& pool_data = pool_iter->second;
+    return pool_data.worker_count;
 }
 
 std::pair<StringSet, StringSet> DriveshaftConfig::compare(const DriveshaftConfig& that) const noexcept {
@@ -164,6 +176,7 @@ void DriveshaftConfig::parseServerList(const Json::Value& node) {
 
 void DriveshaftConfig::parsePoolList(const Json::Value& node) {
     const auto& pools_list = node[cfgkeys::POOLS_LIST];
+
     for (auto i = pools_list.begin(); i != pools_list.end(); ++i) {
         const auto& pool_name = i.name();
         const auto& pool_node = *i;
@@ -187,7 +200,9 @@ void DriveshaftConfig::parsePoolList(const Json::Value& node) {
         }
 
         auto& pool_data = this->m_pool_map[pool_name];
-        pool_data.worker_count = pool_node[cfgkeys::POOL_WORKER_COUNT].asUInt();
+        pool_data.worker_count = this->m_is_depooled
+            ? 0
+            : pool_node[cfgkeys::POOL_WORKER_COUNT].asUInt();
         pool_data.job_processing_uri = pool_node[cfgkeys::POOL_JOB_PROCESSING_URI].asString();
         LOG4CXX_DEBUG(
             MainLogger,
@@ -222,6 +237,15 @@ bool DriveshaftConfig::needsConfigUpdate(const std::string& new_config_filename)
     }
 
     return modified_time > this->m_load_time;
+}
+
+bool DriveshaftConfig::needsDepoolOrRepool() {
+    bool fileExists = this->depoolFileExists();
+    if (this->m_is_depooled != fileExists) {
+        this->m_is_depooled = fileExists;
+        return true;
+    }
+    return false;
 }
 
 std::string DriveshaftConfig::fetchFileContents(const std::string& filename) const {
@@ -264,6 +288,31 @@ bool DriveshaftConfig::validateConfigNode(const Json::Value& node) const {
     }
 
     return true;
+}
+
+std::time_t DriveshaftConfig::getConfigModTime() const {
+    return this->m_load_time;
+}
+
+void DriveshaftConfig::setConfigModTime(std::time_t t) {
+    this->m_load_time = t;
+}
+
+bool DriveshaftConfig::getDepooled() const {
+    return this->m_is_depooled;
+}
+
+void DriveshaftConfig::setDepooled(bool depooled) {
+    this->m_is_depooled = depooled;
+}
+
+void DriveshaftConfig::setDepoolFile(const std::string& depool_file) {
+    this->m_depool_filename = depool_file;
+}
+
+bool DriveshaftConfig::depoolFileExists() const {
+    return !this->m_depool_filename.empty()
+        && boost::filesystem::exists(this->m_depool_filename);
 }
 
 } // namespace Driveshaft

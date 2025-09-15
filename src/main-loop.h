@@ -41,7 +41,7 @@ class MainLoop {
 public:
     // treat this class as a singleton. you really, really don't want more
     // than one in your process.
-    MainLoop(const std::string &config_file, const std::string &exporter_addr);
+    MainLoop(const std::string &config_file, const std::string &exporter_addr, const std::string &depool_file);
     void run();
     ~MainLoop() = default;
 
@@ -56,6 +56,7 @@ private:
     MainLoop& operator=(const MainLoop&&) = delete;
 
     std::string m_config_filename;
+    std::string m_depool_filename;
     DriveshaftConfig m_config;
     ThreadRegistryPtr m_thread_registry;
     MetricProxyPtr m_metric_proxy;

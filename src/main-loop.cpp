@@ -110,8 +110,11 @@ private:
     MetricProxyPtr m_metrics_proxy;
 };
 
-MainLoop::MainLoop(const std::string &config_file, const std::string &exporter_addr) :
+MainLoop::MainLoop(const std::string &config_file,
+    const std::string &exporter_addr,
+    const std::string &depool_file) :
     m_config_filename(config_file),
+    m_depool_filename(depool_file),
     m_config(),
     m_thread_registry(new ThreadRegistry),
     m_metric_proxy(new MetricProxy(exporter_addr)),
@@ -166,6 +169,9 @@ void MainLoop::run() {
         }
 
         DriveshaftConfig new_config;
+        new_config.setDepoolFile(this->m_depool_filename);
+        new_config.setConfigModTime(m_config.getConfigModTime());
+        new_config.setDepooled(m_config.getDepooled());
         new_config.load(this->m_config_filename, json_parser);
 
         new_config.supersede(m_config, *m_pool_watcher);

@@ -139,3 +139,15 @@ TEST_F(DriveshaftConfigTest, TestSupersedeNotifiesPoolWatcher) {
     ASSERT_EQ(std::make_pair(poolRemoved, uint32_t(0)), watcher.callbacksSeen[0]);
     ASSERT_EQ(std::make_pair(poolAdded, uint32_t(5)), watcher.callbacksSeen[1]);
 }
+
+TEST_F(DriveshaftConfigTest, TestDepool) {
+    DriveshaftConfig config;
+
+    config.setDepooled(true);
+    config.parseConfig(testConfigOneServerOnePool, json_parser);
+    ASSERT_EQ(0, config.getWorkerCount("test-pool-1"));
+
+    config.setDepooled(false);
+    config.parseConfig(testConfigOneServerOnePool, json_parser);
+    ASSERT_EQ(5, config.getWorkerCount("test-pool-1"));
+}
