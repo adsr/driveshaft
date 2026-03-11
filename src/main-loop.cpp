@@ -172,10 +172,11 @@ void MainLoop::run() {
         new_config.setDepoolFile(this->m_depool_filename);
         new_config.setConfigModTime(m_config.getConfigModTime());
         new_config.setDepooled(m_config.getDepooled());
-        new_config.load(this->m_config_filename, json_parser);
 
-        new_config.supersede(m_config, *m_pool_watcher);
-        m_config = new_config;
+        if (new_config.load(this->m_config_filename, json_parser)) {
+            new_config.supersede(m_config, *m_pool_watcher);
+            m_config = new_config;
+        }
 
         std::this_thread::sleep_for(std::chrono::seconds(LOOP_SLEEP_DURATION));
     }
