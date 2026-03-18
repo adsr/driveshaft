@@ -18,7 +18,9 @@ DriveshaftConfig::DriveshaftConfig() noexcept :
     m_config_filename(),
     m_server_list(),
     m_pool_map(),
-    m_load_time(0) {
+    m_load_time(0),
+    m_depool_filename(),
+    m_is_depooled(false) {
 }
 
 bool DriveshaftConfig::load(const std::string& config_filename, std::shared_ptr<Json::CharReader> json_parser) {
