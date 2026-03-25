@@ -1,0 +1,25 @@
+name: driveshaft_test
+on: [pull_request]
+jobs:
+  driveshaft_test_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Deps
+        run: |
+          apt install -y build-essential \
+            cmake \
+            libtool \
+            libgearman-dev \
+            libboost-dev \
+            libboost-system-dev \
+            libboost-program-options-dev \
+            libboost-filesystem-dev \
+            liblog4cxx-dev \
+            libcurl4-openssl-dev \
+            prometheus-cpp-dev
+      - name: Build
+        run: cmake -S . -B build && cmake --build build
+      - name: Test
+        run: cmake --build build/ -- test
